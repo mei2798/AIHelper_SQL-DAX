@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL 轉 DAX 小幫手</title>
+    <style>
+        :root {
+            --primary-color: #f2c811; /* Power BI Yellow */
+            --bg-color: #1e1e1e; /* Dark theme background */
+            --panel-bg: #2d2d2d;
+            --text-main: #ffffff;
+            --text-muted: #aaaaaa;
+            --border-color: #444444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .input-section, .output-section {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #d4af0f;
+        }
+
+        .dax-result {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .dax-card {
+            background-color: #1e1e1e;
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .dax-card h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 16px;
+        }
+
+        pre {
+            background-color: #000;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            color: #9cdcfe;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>📊 SQL 轉 DAX 小幫手</h1>
+        
+        <div class="input-section">
+            <label for="sqlInput">請在此貼上您的 SQL 語法：</label>
+            <textarea id="sqlInput" placeholder="例如：&#10;SELECT Category, SUM(SalesAmount) &#10;FROM Sales &#10;WHERE Year = 2023 &#10;GROUP BY Category;"></textarea>
+            <button id="convertBtn">轉換為 DAX</button>
+        </div>
+
+        <div class="loading" id="loadingIndicator">正在為您分析並產生 DAX 語法，請稍候...</div>
+
+        <div class="output-section dax-result" id="outputSection">
+            <h2>✨ 轉換結果 (3種情境)</h2>
+            
+            <div class="dax-card">
+                <h3>1. 建立量值 (Measure) - 最適合 Power BI 視覺效果</h3>
+                <p>將此量值拉入圖表，並將分組欄位放入軸，DAX 會自動處理 GROUP BY。</p>
+                <pre id="daxMeasure"></pre>
+            </div>
+
+            <div class="dax-card">
+                <h3>2. 建立計算資料表 (Calculated Table) - 實體化資料</h3>
+                <p>在模型中直接產生一張包含彙總結果的新資料表。</p>
+                <pre id="daxTable"></pre>
+            </div>
+
+            <div class="dax-card">
+                <h3>3. DAX 查詢 (DAX Query) - 測試或匯出數據</h3>
+                <p>適用於 DAX Studio 或 SQL Server Management Studio (SSMS) 執行查詢。</p>
+                <pre id="daxQuery"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('convertBtn').addEventListener('click', function() {
+            const sql = document.getElementById('sqlInput').value.trim();
+            if (!sql) {
+                alert('請先輸入 SQL 語法喔！');
+                return;
+            }
+
+            // 顯示 Loading 狀態
+            document.getElementById('outputSection').style.display = 'none';
+            document.getElementById('loadingIndicator').style.display = 'block';
+
+            // 模擬連接 AI/後端處理的延遲時間 (1.5秒)
+            setTimeout(() => {
+                document.getElementById('loadingIndicator').style.display = 'none';
+                generateMockDAX(sql);
+                document.getElementById('outputSection').style.display = 'block';
+            }, 1500);
+        });
+
+        // 這個函數為模擬的簡易解析器，實務上這裡會呼叫後端 API (如 OpenAI 或 Gemini)
+        function generateMockDAX(sql) {
+            let upperSQL = sql.toUpperCase();
+            
+            // 簡易的正則表達式來抓取 SQL 關鍵字 (僅為 Demo 示範，無法涵蓋所有 SQL 變化)
+            let tableMatch = upperSQL.match(/FROM\s+([A-Z0-9_]+)/i);
+            let tableName = tableMatch ? tableMatch[1] : 'TableName';
+
+            let groupMatch = upperSQL.match(/GROUP BY\s+([A-Z0-9_]+)/i);
+            let groupCol = groupMatch ? groupMatch[1] : 'ColumnName';
+
+            let sumMatch = upperSQL.match(/SUM\(([A-Z0-9_]+)\)/i);
+            let sumCol = sumMatch ? sumMatch[1] : 'ValueColumn';
+
+            let whereMatch = upperSQL.match(/WHERE\s+(.*?)(?:GROUP BY|$)/i);
+            let whereCondition = whereMatch ? whereMatch[1].trim() : '';
+
+            // 替換 SQL 條件為 DAX 條件格式 (簡易替換 = 號)
+            let daxCondition = whereCondition ? `\n    '${tableName}'[Condition] = "ReplaceMe"` : '';
+            if (whereCondition.includes('=')) {
+                let parts = whereCondition.split('=');
+                daxCondition = `\n    '${tableName}'[${parts[0].trim()}] = ${parts[1].trim()}`;
+            }
+
+            // 產出 1: Measure
+            let measureCode = `<span class="keyword">Measure_Result</span> = 
+<span class="function">CALCULATE</span>(
+    <span class="function">SUM</span>('${tableName}'[${sumCol}])${daxCondition ? ',' + daxCondition : ''}
+)`;
+            
+            // 產出 2: Calculated Table
+            let tableCode = `<span class="keyword">Table_Result</span> = 
+<span class="function">SUMMARIZECOLUMNS</span>(
+    '${tableName}'[${groupCol}],${daxCondition ? '\n    <span class="function">FILTER</span>(\'' + tableName + '\', ' + daxCondition.trim() + '),' : ''}
+    <span class="string">"Total"</span>, <span class="function">SUM</span>('${tableName}'[${sumCol}])
+)`;
+
+            // 產出 3: DAX Query
+            let queryCode = `<span class="keyword">EVALUATE</span>
+<span class="function">CALCULATETABLE</span>(
+    <span class="function">ADDCOLUMNS</span>(
+        <span class="function">VALUES</span>('${tableName}'[${groupCol}]),
+        <span class="string">"Total"</span>, <span class="function">CALCULATE</span>(<span class="function">SUM</span>('${tableName}'[${sumCol}]))
+    )${daxCondition ? ',' + daxCondition : ''}
+)`;
+
+            document.getElementById('daxMeasure').innerHTML = measureCode;
+            document.getElementById('daxTable').innerHTML = tableCode;
+            document.getElementById('daxQuery').innerHTML = queryCode;
+        }
+    </script>
+</body>
+</html>
