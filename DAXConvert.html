@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL 轉 DAX 小幫手</title>
+    <style>
+        :root {
+            --primary: #F2C811; /* Power BI Yellow */
+            --bg: #1e1e1e;
+            --surface: #2d2d2d;
+            --text: #e0e0e0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .panel {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: #121212;
+            color: #d4d4d4;
+            border: 1px solid #444;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 16px;
+            border-radius: 4px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        button {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: opacity 0.2s;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+        .result-card {
+            background: #121212;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 4px 4px 0;
+            display: none;
+        }
+        .result-card h3 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 16px;
+        }
+        pre {
+            background: #000;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            color: #9cdcfe;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+        }
+        .keyword { color: #569cd6; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 SQL 轉 DAX 小幫手 Web App</h1>
+        <div class="panel">
+            <label for="sqlInput"><strong>輸入 SQL 語法：</strong></label>
+            <p style="font-size: 0.9em; color: #aaa; margin-top: 5px;">本工具內建輕量解析器，會自動抓取您的資料表 (FROM)、條件 (WHERE)、群組 (GROUP BY) 與加總欄位 (SUM) 轉換為對應的 DAX。</p>
+            <textarea id="sqlInput" placeholder="例如：
+SELECT Category, SUM(SalesAmount)
+FROM Sales
+WHERE Year = 2023
+GROUP BY Category;"></textarea>
+            <button onclick="convert()">產生 DAX</button>
+        </div>
+        
+        <div class="panel" id="outputPanel" style="display:none;">
+            <h2>✨ 轉換結果 (3種情境)</h2>
+            <div class="result-card" id="card1" style="display:block;">
+                <h3>1. 量值 (Measure) - 適合 Power BI 視覺效果</h3>
+                <p style="font-size: 0.85em; color:#aaa; margin: 5px 0;">將此量值拉入矩陣或圖表，DAX 會自動依據畫面上的維度進行 GROUP BY。</p>
+                <pre id="dax1"></pre>
+            </div>
+            <div class="result-card" id="card2" style="display:block;">
+                <h3>2. 計算資料表 (Calculated Table) - 實體化資料表</h3>
+                <p style="font-size: 0.85em; color:#aaa; margin: 5px 0;">直接在模型中產生一張已分組加總的實體資料表。</p>
+                <pre id="dax2"></pre>
+            </div>
+            <div class="result-card" id="card3" style="display:block;">
+                <h3>3. DAX 查詢 (DAX Query) - 適合 DAX Studio 測試</h3>
+                <p style="font-size: 0.85em; color:#aaa; margin: 5px 0;">可用於 SSMS 或是 DAX Studio 執行並返回資料表結果。</p>
+                <pre id="dax3"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function convert() {
+            const sql = document.getElementById('sqlInput').value;
+            if (!sql.trim()) {
+                alert("請先輸入 SQL 語法");
+                return;
+            }
+
+            let tableName = "TableName";
+            let sumCol = "ValueColumn";
+            let groupCols = [];
+            let condition = "";
+
+            // Regex Parsing (簡易版，適用於常見的標準 SQL 結構)
+            const fromMatch = sql.match(/FROM\s+([a-zA-Z0-9_]+)/i);
+            if (fromMatch) tableName = fromMatch[1];
+
+            const whereMatch = sql.match(/WHERE\s+(.*?)(?:GROUP BY|ORDER BY|LIMIT|;|$)/i);
+            if (whereMatch) condition = whereMatch[1].trim();
+
+            const groupMatch = sql.match(/GROUP BY\s+([a-zA-Z0-9_\,\s]+)/i);
+            if (groupMatch) {
+                groupCols = groupMatch[1].split(',').map(s => s.trim().replace(/;/g, ''));
+            }
+
+            const selectMatch = sql.match(/SELECT\s+(.*?)\s+FROM/i);
+            if (selectMatch) {
+                const selectClause = selectMatch[1];
+                // 抓取聚合函數 (SUM, COUNT 等) 內的欄位
+                const aggMatch = selectClause.match(/(?:SUM|COUNT|AVG|MIN|MAX)\s*\(\s*([a-zA-Z0-9_]+)\s*\)/i);
+                if (aggMatch) {
+                    sumCol = aggMatch[1];
+                }
+                // 若沒有明確寫 GROUP BY，但 SELECT 裡面有非聚合欄位，則自動視為 group column
+                if (groupCols.length === 0) {
+                     const cols = selectClause.split(',').map(s => s.trim());
+                     groupCols = cols.filter(c => !c.match(/\(/) && !c.match(/\sAS\s/i));
+                }
+            }
+
+            // 處理條件 (將 SQL 條件轉為 DAX)
+            let daxCondition = "";
+            if(condition) {
+                // 簡單支援 '=' 的欄位拆解
+                if (condition.includes('=')) {
+                    let parts = condition.split('=');
+                    if(parts.length === 2) {
+                        daxCondition = `\n    '${tableName}'[${parts[0].trim()}] = ${parts[1].trim()}`;
+                    } else {
+                        daxCondition = `\n    '${tableName}'[${condition}]`;
+                    }
+                } else {
+                    daxCondition = `\n    '${tableName}'[${condition}]`;
+                }
+            }
+
+            let groupDax = groupCols.filter(Boolean).map(c => `'${tableName}'[${c}]`).join(', ');
+
+            // 產出 1. Measure
+            const code1 = `<span class="keyword">Measure</span> = 
+<span class="function">CALCULATE</span>(
+    <span class="function">SUM</span>('${tableName}'[${sumCol}])${daxCondition ? ',' + daxCondition : ''}
+)`;
+            
+            // 產出 2. Table
+            const filterCode = daxCondition ? `\n    <span class="function">FILTER</span>('${tableName}', ${daxCondition.trim()}),` : '';
+            const code2 = `<span class="keyword">CalculatedTable</span> = 
+<span class="function">SUMMARIZECOLUMNS</span>(
+    ${groupDax}${groupDax ? ',' : ''}${filterCode}
+    <span class="string">"Total"</span>, <span class="function">SUM</span>('${tableName}'[${sumCol}])
+)`;
+
+            // 產出 3. Query
+            const mainGroupCol = groupCols.length > 0 && groupCols[0] !== '' ? groupCols[0] : 'Column';
+            const code3 = `<span class="keyword">EVALUATE</span>
+<span class="function">CALCULATETABLE</span>(
+    <span class="function">ADDCOLUMNS</span>(
+        <span class="function">VALUES</span>('${tableName}'[${mainGroupCol}]),
+        <span class="string">"Total"</span>, <span class="function">CALCULATE</span>(<span class="function">SUM</span>('${tableName}'[${sumCol}]))
+    )${daxCondition ? ',' + daxCondition : ''}
+)`;
+
+            document.getElementById('dax1').innerHTML = code1;
+            document.getElementById('dax2').innerHTML = code2;
+            document.getElementById('dax3').innerHTML = code3;
+            document.getElementById('outputPanel').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
