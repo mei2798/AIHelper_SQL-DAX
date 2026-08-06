@@ -1,0 +1,64 @@
+<body>
+
+    <header>🛠️ 雙向實時 HTML 編輯器 (修改任意一邊，另一邊自動同步)</header>
+
+    <div class="container">
+        <!-- 左側：HTML 原始碼編輯區 -->
+        <div class="pane">
+            <div class="pane-title">HTML 原始碼編輯區</div>
+            <textarea id="htmlInput" placeholder="請在此輸入或修改 HTML 原始碼..."></textarea>
+        </div>
+
+        <!-- 右側：結果預覽與可編輯區 -->
+        <div class="pane">
+            <div class="pane-title">結果預覽區 (可點擊直接打字編輯內容)</div>
+            <div id="visualPreview" class="preview-area" contenteditable="true"></div>
+        </div>
+    </div>
+
+    <script>
+        const htmlInput = document.getElementById('htmlInput');
+        const visualPreview = document.getElementById('visualPreview');
+
+        // 初始預載您的教學內容
+        const initialHTML = `<section>
+    <h2>【01】如何在 GitHub 新增圖片</h2>
+    <ol>
+        <li>點擊「<strong>ISSUE 問題</strong>」，新增 ISSUE，直接複製圖片就會產生一串圖片網址。</li>
+    </ol>
+    <img width="1336" height="463" alt="Image" src="https://github.com" />
+</section>
+
+<section>
+    <h2>【02】 如何在 GitHub 檢視網頁設計(HTML)結果</h2>
+    <ol>
+        <li>點擊 GitHub 檔案頁面的 <code>Raw</code> 按鈕，將原始碼全部複製。</li>
+        <li>開啟 Chrome，按 <code>F12</code> 打開開發者工具 &gt; <strong>Elements</strong> &gt; 在 <code>&lt;body&gt;</code> 標籤上按右鍵 &gt; <strong>Edit as HTML</strong> &gt; 將程式碼貼上 &gt; 再按 <code>&lt;body&gt;</code> 左方箭頭（類似儲存作用） &gt; 即可看見畫面。</li>
+        <li>再次按 <code>F12</code> 關閉開發者工具，即可看見完整網頁畫面。</li>
+    </ol>
+</section>`;
+
+        // 初始化填入內容
+        htmlInput.value = initialHTML;
+        visualPreview.innerHTML = initialHTML;
+
+        let isUpdating = false;
+
+        // 當修改【左邊】HTML 程式碼時，同步更新【右邊】畫面
+        htmlInput.addEventListener('input', () => {
+            if (isUpdating) return;
+            isUpdating = true;
+            visualPreview.innerHTML = htmlInput.value;
+            isUpdating = false;
+        });
+
+        // 當修改【右邊】畫面內容時，同步更新【左邊】HTML 程式碼
+        visualPreview.addEventListener('input', () => {
+            if (isUpdating) return;
+            isUpdating = true;
+            htmlInput.value = visualPreview.innerHTML;
+            isUpdating = false;
+        });
+    </script>
+
+</body>
