@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL 轉 DAX 語法翻譯機</title>
+    <style>
+        :root {
+            --primary: #118D95;
+            --primary-dark: #0D6F75;
+            --bg: #F3F2F1;
+            --card-bg: #FFFFFF;
+            --text: #252423;
+            --text-secondary: #605E5C;
+            --border: #EDEBE9;
+            --code-bg: #F3F2F1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        header h1 {
+            color: var(--primary);
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-secondary);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-container {
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .output-box {
+            background-color: var(--code-bg);
+            border-left: 4px solid var(--primary);
+            padding: 12px;
+            border-radius: 0 4px 4px 0;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            min-height: 180px;
+            overflow-x: auto;
+        }
+
+        .analysis-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 6px;
+        }
+
+        .analysis-item {
+            margin-bottom: 12px;
+        }
+
+        .analysis-item strong {
+            color: #A4262C;
+            font-family: 'Consolas', monospace;
+            background: #FDE7E9;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .placeholder-text {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>DAX 語法翻譯機</h1>
+        <p>輸入 SQL 查詢語句，自動轉換為 Power BI DAX 運算式並提供結構解析</p>
+    </header>
+
+    <!-- 上方：輸入與翻譯區塊 -->
+    <div class="card">
+        <div class="grid">
+            <div>
+                <label for="sqlInput">1. 輸入 SQL 語法</label>
+                <textarea id="sqlInput" placeholder="例如：&#10;SELECT SUM(Sales) &#10;FROM Orders &#10;WHERE Region = 'North'"></textarea>
+            </div>
+            <div>
+                <label>2. 翻譯結果 (DAX)</label>
+                <div id="daxOutput" class="output-box placeholder-text">等待輸入 SQL 語法並點擊翻譯...</div>
+            </div>
+        </div>
+        <div class="btn-container">
+            <button onclick="translateSQL()">立即翻譯成 DAX</button>
+        </div>
+    </div>
+
+    <!-- 下方：DAX 解析區塊 -->
+    <div class="card">
+        <div class="analysis-title">3. DAX 函數與結構詳細解析</div>
+        <div id="analysisOutput" class="placeholder-text">
+            尚未有解析資料。請先於上方完成翻譯。
+        </div>
+    </div>
+</div>
+
+<script>
+    function translateSQL() {
+        const sql = document.getElementById('sqlInput').value.trim();
+        const daxOutput = document.getElementById('daxOutput');
+        const analysisOutput = document.getElementById('analysisOutput');
+
+        if (!sql) {
+            daxOutput.innerText = "請先輸入 SQL 語法。";
+            daxOutput.classList.add('placeholder-text');
+            analysisOutput.innerText = "尚未有解析資料。請先於上方完成翻譯。";
+            analysisOutput.classList.add('placeholder-text');
+            return;
+        }
+
+        // 移除預設樣式
+        daxOutput.classList.remove('placeholder-text');
+        analysisOutput.classList.remove('placeholder-text');
+
+        // 簡易解析邏輯
+        let daxResult = "";
+        let analysisHtml = "";
+
+        // 轉為大寫以便比對關鍵字
+        const sqlUpper = sql.toUpperCase();
+
+        if (sqlUpper.includes("GROUP BY")) {
+            // 處理聚合分組情況
+            daxResult = `EVALUATE\nSUMMARIZECOLUMNS(\n    'Table'[GroupColumn],\n    FILTER('Table', 'Table'[ConditionColumn] = "Value"),\n    "Total Value", SUM('Table'[SalesColumn])\n)`;
+            analysisHtml = `
+                <div class="analysis-item"><strong>SUMMARIZECOLUMNS</strong>：Power BI 中最推薦用於建立分組摘要表的函數，效能優於舊版的 SUMMARIZE。</div>
+                <div class="analysis-item"><strong>FILTER</strong>：對應 SQL 的 <code>WHERE</code>。篩選出符合特定條件的資料列。</div>
+                <div class="analysis-item"><strong>SUM</strong>：對指定資料行進行標準數值加總。</div>
+                <div class="analysis-item"><strong>EVALUATE</strong>：DAX 查詢語法的起手式，相當於 SQL 中的 <code>SELECT</code> 輸出行為。</div>
+            `;
+        } else if (sqlUpper.includes("WHERE") && sqlUpper.includes("SUM")) {
+            // 處理帶有篩選的計算量
+            daxResult = `Calculated_Measure = \nCALCULATE(\n    SUM('Orders'[Sales]), \n    'Orders'[Region] = "North"\n)`;
+            analysisHtml = `
+                <div class="analysis-item"><strong>CALCULATE</strong>：DAX 中最強大的核心函數。它會修改當前的「篩選內容 (Filter Context)」，在此處對應 SQL 的 <code>WHERE</code>。</div>
+                <div class="analysis-item"><strong>SUM</strong>：執行數值加總，作為 CALCULATE 的第一個參數（核心計算）。</div>
+                <div class="analysis-item"><strong>'Orders'[Region] = "North"</strong>：作為第二參數傳入 CALCULATE，自動轉為內建的篩選器。</div>
+            `;
+        } else if (sqlUpper.includes("SUM") || sqlUpper.includes("AVG") || sqlUpper.includes("COUNT")) {
+            // 單純聚合
+            daxResult = `Total_Amount = SUM('Table'[Column])`;
+            analysisHtml = `
+                <div class="analysis-item"><strong>SUM / AVERAGE / COUNT</strong>：基礎聚合函數。在 DAX 中，量值 (Measure) 必須包裝在聚合函數中，不能直接引用整欄名稱。</div>
+                <div class="analysis-item"><strong>'Table'[Column]</strong>：DAX 的標準標準命名格式，單引號為資料表名，中括號為資料行名。</div>
+            `;
+        } else if (sqlUpper.includes("JOIN")) {
+            // 處理關聯
+            daxResult = `EVALUATE\nNATURALLEFTOUTERJOIN(\n    'TableA',\n    'TableB'\n)`;
+            analysisHtml = `
+                <div class="analysis-item"><strong>NATURALLEFTOUTERJOIN</strong>：對應 SQL 的 <code>LEFT JOIN</code>。但在 Power BI 中，通常建議直接在「模型檢視」中拉好關聯線，不需在語法中硬寫 JOIN。</div>
+            `;
+        } else {
+            // 預設標準輸出
+            daxResult = `EVALUATE\nSELECTCOLUMNS(\n    'Table',\n    "欄位呈現名稱", 'Table'[ColumnName]\n)`;
+            analysisHtml = `
+                <div class="analysis-item"><strong>EVALUATE</strong>：宣告這是一段 DAX 查詢語句。</div>
+                <div class="analysis-item"><strong>SELECTCOLUMNS</strong>：對應 SQL 的 <code>SELECT</code> 挑選特定欄位，並可重新命名欄位抬頭。</div>
+            `;
+        }
+
+        // 渲染至畫面
+        daxOutput.innerText = daxResult;
+        analysisOutput.innerHTML = analysisHtml;
+    }
+</script>
+
+</body>
+</html>
