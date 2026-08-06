@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAX Function Explorer Pro</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f7fb;
+        }
+
+        header {
+            background: #1e40af;
+            color: #fff;
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        #search {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 10px;
+        }
+
+        .layout {
+            display: flex;
+            height: calc(100vh - 95px);
+        }
+
+        aside {
+            width: 260px;
+            background: #fff;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+        }
+
+        .cat {
+            padding: 12px 16px;
+            cursor: pointer;
+        }
+
+        .cat:hover,
+        .cat.active {
+            background: #dbeafe;
+            color: #1e40af;
+            font-weight: bold;
+        }
+
+        main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+            transition: .2s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e0f2fe;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .5);
+        }
+
+        .box {
+            width: 900px;
+            max-width: 95%;
+            margin: 40px auto;
+            background: white;
+            padding: 24px;
+            border-radius: 18px;
+        }
+
+        pre {
+            background: #0f172a;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        #fl {
+            word-break: break-all;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h2>🚀 DAX Function Explorer Pro</h2>
+
+        <input id="search"
+               type="text"
+               placeholder="搜尋函數名稱、用途、關鍵字..." />
+    </header>
+
+    <div class="layout">
+
+        <aside id="cats"></aside>
+
+        <main>
+            <div id="count"></div>
+            <div id="grid" class="grid"></div>
+        </main>
+
+    </div>
+
+    <div class="modal" id="modal">
+
+        <div class="box">
+
+            <h2 id="fn"></h2>
+
+            <p>
+                <b>分類：</b>
+                <span id="fc"></span>
+            </p>
+
+            <p id="fd"></p>
+
+            <h3>語法</h3>
+            <pre id="fs"></pre>
+
+            <h3>範例</h3>
+            <pre id="fe"></pre>
+
+            <p>
+                <a id="fl"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                </a>
+            </p>
+
+            <button onclick="closeModal()">
+                關閉
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        const data = [
+
+            {
+                n: "SUM",
+                c: "聚合函數",
+                d: "將資料行中的所有數值加總",
+                s: "SUM(<column>)",
+                e: "SUM(Sales[Amount])"
+            },
+
+            {
+                n: "SUMX",
+                c: "聚合函數",
+                d: "逐列計算後加總",
+                s: "SUMX(<table>,<expression>)",
+                e: "SUMX(Sales,Sales[Qty]*Sales[Price])"
+            },
+
+            {
+                n: "AVERAGE",
+                c: "聚合函數",
+                d: "平均值",
+                s: "AVERAGE(<column>)",
+                e: "AVERAGE(Sales[Amount])"
+            },
+
+            {
+                n: "COUNTROWS",
+                c: "聚合函數",
+                d: "計算資料列數",
+                s: "COUNTROWS(<table>)",
+                e: "COUNTROWS(Customer)"
+            },
+
+            {
+                n: "DATE",
+                c: "日期時間",
+                d: "建立日期",
+                s: "DATE(year,month,day)",
+                e: "DATE(2026,1,1)"
+            },
+
+            {
+                n: "TODAY",
+                c: "日期時間",
+                d: "取得今日日期",
+                s: "TODAY()",
+                e: "TODAY()"
+            },
+
+            {
+                n: "DATEDIFF",
+                c: "日期時間",
+                d: "計算日期差異",
+                s: "DATEDIFF(start,end,DAY)",
+                e: "DATEDIFF([Start],[End],DAY)"
+            },
+
+            {
+                n: "CALCULATE",
+                c: "篩選函數",
+                d: "修改 Filter Context",
+                s: "CALCULATE(expression,filter)",
+                e: 'CALCULATE([Sales],Product[Type]="A")'
+            },
+
+            {
+                n: "FILTER",
+                c: "篩選函數",
+                d: "回傳篩選資料表",
+                s: "FILTER(table,condition)",
+                e: "FILTER(Sales,Sales[Amount]>1000)"
+            },
+
+            {
+                n: "ALL",
+                c: "篩選函數",
+                d: "移除篩選",
+                s: "ALL(table)",
+                e: "CALCULATE([Sales],ALL(Product))"
+            },
+
+            {
+                n: "IF",
+                c: "邏輯函數",
+                d: "條件判斷",
+                s: "IF(test,a,b)",
+                e: 'IF([Sales]>0,"Y","N")'
+            },
+
+            {
+                n: "SWITCH",
+                c: "邏輯函數",
+                d: "多條件判斷",
+                s: "SWITCH(expr,val,res)",
+                e: 'SWITCH(TRUE(),[Sales]>100,"A")'
+            },
+
+            {
+                n: "RANKX",
+                c: "統計函數",
+                d: "排名",
+                s: "RANKX(table,expr)",
+                e: "RANKX(ALL(Customer),[Sales])"
+            },
+
+            {
+                n: "MEDIAN",
+                c: "統計函數",
+                d: "中位數",
+                s: "MEDIAN(column)",
+                e: "MEDIAN(Sales[Amount])"
+            },
+
+            {
+                n: "RELATED",
+                c: "關聯性函式",
+                d: "取得關聯值",
+                s: "RELATED(column)",
+                e: "RELATED(Product[Name])"
+            },
+
+            {
+                n: "USERELATIONSHIP",
+                c: "關聯性函式",
+                d: "啟用關聯",
+                s: "USERELATIONSHIP(a,b)",
+                e: "CALCULATE([Sales],USERELATIONSHIP(...))"
+            },
+
+            {
+                n: "CONCATENATE",
+                c: "文字函式",
+                d: "字串串接",
+                s: "CONCATENATE(a,b)",
+                e: 'CONCATENATE("A","B")'
+            },
+
+            {
+                n: "LEFT",
+                c: "文字函式",
+                d: "取得左側字元",
+                s: "LEFT(text,num)",
+                e: 'LEFT("PowerBI",5)'
+            },
+
+            {
+                n: "DATEADD",
+                c: "時間智慧",
+                d: "時間位移",
+                s: "DATEADD(date,-1,YEAR)",
+                e: "DATEADD(Calendar[Date],-1,YEAR)"
+            },
+
+            {
+                n: "TOTALYTD",
+                c: "時間智慧",
+                d: "YTD計算",
+                s: "TOTALYTD(expr,date)",
+                e: "TOTALYTD([Sales],Calendar[Date])"
+            },
+
+            {
+                n: "LOOKUP",
+                c: "最近新增",
+                d: "Visual Calculation 查詢",
+                s: "LOOKUP()",
+                e: "LOOKUP()"
+            },
+
+            {
+                n: "LOOKUPWITHTOTALS",
+                c: "最近新增",
+                d: "Visual Calculation 查詢含總計",
+                s: "LOOKUPWITHTOTALS()",
+                e: "LOOKUPWITHTOTALS()"
+            },
+
+            {
+                n: "RANK",
+                c: "最近新增",
+                d: "Visual Calculation 排名",
+                s: "RANK()",
+                e: "RANK()"
+            }
+        ];
+
+        const searchBox =
+            document.getElementById("search");
+
+        const countEl =
+            document.getElementById("count");
+
+        const gridEl =
+            document.getElementById("grid");
+
+        const catsEl =
+            document.getElementById("cats");
+
+        let current = "全部";
+
+        const cats = [
+            "全部",
+            ...new Set(data.map(x => x.c))
+        ];
+
+        cats.forEach((cat, i) => {
+
+            const div = document.createElement("div");
+
+            div.className =
+                "cat" + (i === 0 ? " active" : "");
+
+            div.innerText = cat;
+
+            div.onclick = () => {
+
+                document
+                    .querySelectorAll(".cat")
+                    .forEach(x =>
+                        x.classList.remove("active")
+                    );
+
+                div.classList.add("active");
+
+                current = cat;
+
+                render();
+            };
+
+            catsEl.appendChild(div);
+        });
+
+        function render() {
+
+            const keyword =
+                searchBox.value.toLowerCase();
+
+            const rows = data.filter(x =>
+                (current === "全部" || x.c === current)
+                &&
+                (x.n + x.c + x.d)
+                    .toLowerCase()
+                    .includes(keyword)
+            );
+
+            countEl.innerHTML =
+                `<h3>共 ${rows.length} 筆函數</h3>`;
+
+            gridEl.innerHTML =
+                rows.map(x => `
+                    <div class="card">
+                        <div class="tag">${x.c}</div>
+                        <h3>${x.n}</h3>
+                        <div>${x.d}</div>
+                    </div>
+                `).join("");
+
+            document
+                .querySelectorAll(".card")
+                .forEach((card, i) => {
+                    card.onclick = () =>
+                        openDetail(rows[i]);
+                });
+        }
+
+        function openDetail(item) {
+
+            document.getElementById("fn").innerText =
+                item.n;
+
+            document.getElementById("fc").innerText =
+                item.c;
+
+            document.getElementById("fd").innerText =
+                item.d;
+
+            document.getElementById("fs").textContent =
+                item.s;
+
+            document.getElementById("fe").textContent =
+                item.e;
+
+            const learnUrl =
+                `https://learn.microsoft.com/zh-tw/dax/${item.n.toLowerCase()}-function-dax`;
+
+            const link =
+                document.getElementById("fl");
+
+            link.href = learnUrl;
+            link.title = learnUrl;
+            link.textContent = learnUrl;
+
+            document.getElementById("modal")
+                .style.display = "block";
+        }
+
+        function closeModal() {
+
+            document.getElementById("modal")
+                .style.display = "none";
+        }
+
+        searchBox.addEventListener(
+            "input",
+            render
+        );
+
+        render();
+
+    </script>
+
+</body>
+
+</html>
