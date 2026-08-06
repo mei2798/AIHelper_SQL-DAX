@@ -1,2 +1,13 @@
-//快速檢視 GitHub 上的 HTML 網頁視覺結果
+//【01】如何在 GitHub 新增圖片
 
+1.點擊「ISSUE 問題」 ， 新增 ISSUE ， 直接複製圖片 就會產生一串 圖片網址 
+
+<img width="1336" height="463" alt="Image" src="https://github.com/user-attachments/assets/094d7c49-a572-4624-8049-4f6b4fd9879a" />
+
+
+
+//【02】 如何在 GitHub 檢視網頁設計(HTML)結果
+
+1.點擊 GitHub 檔案頁面的 Raw 按鈕，將原始碼全部複製
+2.開啟Chrome，按 F12 打開開發者工具 > Elements >  <body> 標籤上按右鍵 >  Edit as HTML > 程式碼貼上 > 再按 <body>  左方箭頭 (類似儲存作用)  > 即可看見畫面
+3.再次按 F12 即可看見完整網頁畫面。
