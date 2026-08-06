@@ -3,286 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQL 轉 DAX AI 翻譯機 (Gemini 版)</title>
+    <title>我的 HTML 即時預覽編輯器</title>
     <style>
-        :root {
-            /* 融合 PowerBI 黃色與 Gemini 的科技感 */
-            --primary-color: #1a73e8; 
-            --hover-color: #1557b0;
-            --powerbi-yellow: #f2c811;
-            --bg-color: #f0f2f5;
-            --box-bg: #ffffff;
-            --text-color: #333333;
-            --border-color: #cccccc;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+        /* 基本樣式設定 */
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
+            padding: 0;
         }
-
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #1e1e1e;
+            color: #fff;
+        }
+        header {
+            background-color: #2d2d2d;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-bottom: 1px solid #444;
+        }
+        /* 左右分欄版面 */
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: var(--box-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        h1 span {
-            color: var(--primary-color);
-            border-bottom: 3px solid var(--powerbi-yellow);
-        }
-
-        .config-section {
-            background: #f8f9fa;
-            padding: 15px 20px;
-            border-radius: 8px;
-            border: 1px solid #e8eaed;
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .config-section label {
-            font-weight: bold;
-            font-size: 14px;
-            color: #202124;
-        }
-
-        .config-section input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-family: monospace;
-            font-size: 14px;
-        }
-
-        .config-section input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
-        }
-
-        .workspace {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .editor-box {
             flex: 1;
-            min-width: 300px;
+            overflow: hidden;
+        }
+        .panel {
+            flex: 1;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
-
-        .editor-box label {
-            font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #202124;
+        .panel-title {
+            background-color: #252526;
+            padding: 5px 15px;
+            font-size: 0.85rem;
+            color: #aaa;
+            text-transform: uppercase;
+            border-bottom: 1px solid #3c3c3c;
         }
-
+        /* 程式碼輸入區 */
         textarea {
-            width: 100%;
-            height: 350px;
-            padding: 15px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            resize: vertical;
-            box-sizing: border-box;
-            background-color: #fafafa;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            background-color: #ffffff;
-        }
-
-        .action-area {
-            text-align: center;
-            margin: 25px 0;
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: #ffffff;
-            border: none;
-            padding: 14px 36px;
+            flex: 1;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: "Courier New", Courier, monospace;
             font-size: 16px;
-            font-weight: bold;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 6px rgba(26,115,232,0.2);
+            padding: 15px;
+            border: none;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
         }
-
-        button:hover {
-            background-color: var(--hover-color);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(26,115,232,0.3);
+        /* 預覽區分隔線 */
+        .divider {
+            width: 2px;
+            background-color: #3c3c3c;
         }
-
-        button:disabled {
-            background-color: #cccccc;
-            color: #666666;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        /* 預覽 iframe */
+        iframe {
+            flex: 1;
+            background-color: #ffffff;
+            border: none;
         }
-
-        .footer {
-            text-align: center;
-            font-size: 13px;
-            color: #5f6368;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #e8eaed;
-        }
-
-        .copy-btn {
-            background: #f1f3f4;
-            color: #202124;
-            font-size: 12px;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: none;
-            border: 1px solid #dadce0;
-        }
-        .copy-btn:hover { background: #e8eaed; transform: none; box-shadow: none;}
     </style>
 </head>
 <body>
 
+    <header>🌐 HTML 即時預覽編輯器</header>
+
     <div class="container">
-        <h1>✨ SQL 轉 <span>DAX 翻譯機</span> (Gemini 驅動)</h1>
-
-        <div class="config-section">
-            <label for="apiKey">設定 Google Gemini API Key (僅在您的瀏覽器端運行):</label>
-            <input type="password" id="apiKey" placeholder="請輸入您的 AIza... 開頭的 API Key">
-            <div style="font-size: 12px; color: #5f6368;">
-                尚未擁有 Key？請至 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary-color);">Google AI Studio</a> 免費申請。
-            </div>
+        <!-- 左側：原始碼編輯區 -->
+        <div class="panel">
+            <div class="panel-title">HTML / CSS / JS 程式碼</div>
+            <textarea id="editor" spellcheck="false" placeholder="在此輸入 HTML 程式碼..."><!-- 預設顯示的範例內容 -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            text-align: center; 
+            padding-top: 50px; 
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            height: 100vh;
+            margin: 0;
+        }
+        h1 { color: #333; }
+        button { 
+            padding: 10px 20px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 5px; 
+            background: #fff; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+    </style>
+</head>
+<body>
+    <h1>🎉 恭喜！即時預覽成功工作中！</h1>
+    <p>試著修改左邊的文字，右邊會立刻同步改變喔！</p>
+    <button onclick="alert('JavaScript 也能正常執行！')">點我測試 JS</button>
+</body>
+</html></textarea>
         </div>
 
-        <div class="workspace">
-            <div class="editor-box">
-                <label for="sqlInput">1. 輸入 SQL 語法</label>
-                <textarea id="sqlInput" placeholder="請在此輸入您的 SQL 查詢。&#10;&#10;例如：&#10;SELECT &#10;    Category, &#10;    SUM(SalesAmount) AS TotalSales &#10;FROM SalesData &#10;WHERE Year = 2024 &#10;GROUP BY Category"></textarea>
-            </div>
-            
-            <div class="editor-box">
-                <label for="daxOutput">
-                    2. Gemini 生成的 DAX 語法
-                    <button class="copy-btn" onclick="copyDax()">📋 複製 DAX</button>
-                </label>
-                <textarea id="daxOutput" readonly placeholder="點擊下方按鈕，此處將生成對應的 DAX 語法..."></textarea>
-            </div>
-        </div>
+        <div class="divider"></div>
 
-        <div class="action-area">
-            <button id="translateBtn" onclick="translateToDax()">🚀 一鍵生成 DAX</button>
-        </div>
-
-        <div class="footer">
-            ⚠️ 注意：此工具依賴 Gemini 模型生成。已嚴格指示 AI 保持資料表(Table)與欄位(Column)名稱一致，但請在 Power BI 實際應用前稍作確認。
+        <!-- 右側：即時預覽區 -->
+        <div class="panel">
+            <div class="panel-title">即時預覽效果</div>
+            <iframe id="preview"></iframe>
         </div>
     </div>
 
     <script>
-        async function translateToDax() {
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const sqlInput = document.getElementById('sqlInput').value.trim();
-            const daxOutput = document.getElementById('daxOutput');
-            const translateBtn = document.getElementById('translateBtn');
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
 
-            if (!apiKey) {
-                alert('請先輸入有效的 Gemini API Key！');
-                document.getElementById('apiKey').focus();
-                return;
-            }
-            if (!sqlInput) {
-                alert('請先輸入要轉換的 SQL 語法！');
-                document.getElementById('sqlInput').focus();
-                return;
-            }
+        // 更新預覽畫面的核心函數
+        function updatePreview() {
+            const code = editor.value;
+            // 利用 srcdoc 將文字直接渲染進 iframe 中，並解決腳本執行的安全限制問題
+            preview.srcdoc = code;
+        }
 
-            // 更新 UI 狀態
-            daxOutput.value = "Gemini AI 正在轉換中，請稍候...";
-            translateBtn.disabled = true;
-            translateBtn.innerHTML = "⏳ 處理中...";
+        // 監聽輸入事件：當使用者打字時，即時觸發更新
+        editor.addEventListener('input', updatePreview);
 
-            // Gemini 專用的 System Instruction 與 Prompt
-            const systemInstruction = `你是一位精通 SQL 語法與 Power BI DAX 函數的高階數據分析專家。你的任務是將使用者提供的 SQL 語法翻譯成功能完全對等的 DAX 語法。
-
-【嚴格規則 - 違反將導致錯誤】：
-1. 必須「完全照抄」SQL 中的實體名稱：資料表(Table names) 與 欄位(Column names) 必須與 SQL 輸入中的拼寫、大小寫完全一致，絕對不能自行假設、修改或翻譯成中文。
-2. 你只負責輸出 DAX 程式碼，不要包含任何開場白、結語，也不要加上 Markdown 代碼區塊符號 (例如 \`\`\`dax )，只返回純粹的 DAX 代碼文本。
-3. 根據 SQL 的意圖決定回傳的是 Measure (量值)、Calculated Column (計算資料行) 或是 Calculated Table (計算資料表)。`;
-
-            // 組合 API 請求 URL (使用 gemini-1.5-flash 模型)
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-            // 建構 Gemini API 要求的 Payload 格式
-            const payload = {
-                systemInstruction: {
-                    parts: [{ text: systemInstruction }]
-                },
-                contents: [{
-                    role: "user",
-                    parts: [{ text: `請將以下 SQL 轉換為 DAX：\n\n${sqlInput}` }]
-                }],
-                generationConfig: {
-                    temperature: 0.1 // 低隨機性，確保語法轉換精確
-                }
-            };
-
-            try {
-                // 呼叫 Gemini API
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || 'API 請求失敗，請檢查 API Key 或是網路連線狀態。');
-                }
-
-                const data = await response.json();
-                
-                // 嘗試解析 Gemini 的回傳內容
-                if (data.candidates && data.candidates.length > 0 && data.candidates[0].content.parts.length > 0) {
-                    let daxCode = data.candidates[0].content.parts[0].text.trim();
-                    
-                    // 預防 AI 依然給出 markdown tag 的防呆處理
-                    daxCode = daxCode.replace(/^```(dax|sql)?\n?/i, '').replace(/\n?
+        // 網頁載入時，先初始化執行一次預覽
+        window.addEventListener('DOMContentLoaded', updatePreview);
+    </script>
+</body>
+</html>
