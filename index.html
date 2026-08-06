@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+
+    
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>【Vicky * AI】 雙向實時 HTML 編輯器</title>
+<title>  ❤️【Vicky * AI創作集】 ❤️ </title>
 
 <style>
 *{
@@ -87,73 +89,13 @@ header{
 
 <body>
 
-<header>
-🛠️ 【Vicky * AI】 雙向實時 HTML 編輯器
-</header>
 
-<div class="container">
-
-    <div class="pane">
-        <div class="pane-title">
-            HTML 原始碼編輯區
-        </div>
-
-        <textarea
-            id="htmlInput"
-            placeholder="請輸入 HTML..."
-        ></textarea>
-
-    </div>
-
-    <div class="pane">
-
-        <div class="pane-title">
-            結果預覽與可編輯區
-        </div>
-
-        <div
-            id="visualPreview"
-            contenteditable="true"
-        ></div>
-
-    </div>
-
-</div>
-
-<script>
-
-document.addEventListener("DOMContentLoaded",()=>{
-
-    const htmlInput=document.getElementById("htmlInput");
-    const visualPreview=document.getElementById("visualPreview");
-
-    let syncing=false;
-
-    function updatePreview(){
-        if(syncing)return;
-        syncing=true;
-        visualPreview.innerHTML=htmlInput.value;
-        syncing=false;
-    }
-
-    function updateSource(){
-        if(syncing)return;
-        syncing=true;
-        htmlInput.value=visualPreview.innerHTML;
-        syncing=false;
-    }
-
-    htmlInput.addEventListener("input",updatePreview);
-
-    visualPreview.addEventListener("input",updateSource);
-
-    // 初始內容
-    htmlInput.value="";
-    visualPreview.innerHTML="";
-
-});
-
-</script>
+<p><span style="color:#8e44ad"><strong>【網路資源】</strong></span>&nbsp;<a href="https://www.ifreesite.com/editor/#google_vignette">線上網頁編輯器</a></p>
+<BR>
+<p><strong><span style="color:#9b59b6">【Vicky * AI創作集】&nbsp;</span></strong><br />
+1.雙向&nbsp;HTML 預覽編輯器 :&nbsp;<a href="https://mei2798.github.io/AIHelper_SQL-DAX/htmledit_01.html">htmledit_01.html</a><br />
+2.單向HTML 預覽編輯器 :&nbsp;<a href="https://mei2798.github.io/AIHelper_SQL-DAX/htmledit_02.html">htmledit_02.html</a><br />
+3.DAX 翻譯機&nbsp;:&nbsp;<a href="https://mei2798.github.io/AIHelper_SQL-DAX/dax-translator.html">htmledit_02.html</a></p>
 
 </body>
 </html>
