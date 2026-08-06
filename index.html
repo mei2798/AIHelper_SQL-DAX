@@ -1,145 +1,64 @@
-//我的網址 : https://mei2798.github.io/AIHelper_SQL-DAX/
-
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> 【Vicky * AI】 的 HTML 即時預覽編輯器</title>
-    <style>
-        /* 基本樣式設定 */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background-color: #1e1e1e;
-            color: #fff;
-        }
-        header {
-            background-color: #2d2d2d;
-            padding: 10px 20px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border-bottom: 1px solid #444;
-        }
-        /* 左右分欄版面 */
-        .container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-        .panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        .panel-title {
-            background-color: #252526;
-            padding: 5px 15px;
-            font-size: 0.85rem;
-            color: #aaa;
-            text-transform: uppercase;
-            border-bottom: 1px solid #3c3c3c;
-        }
-        /* 程式碼輸入區 */
-        textarea {
-            flex: 1;
-            background-color: #1e1e1e;
-            color: #d4d4d4;
-            font-family: "Courier New", Courier, monospace;
-            font-size: 16px;
-            padding: 15px;
-            border: none;
-            resize: none;
-            outline: none;
-            line-height: 1.5;
-        }
-        /* 預覽區分隔線 */
-        .divider {
-            width: 2px;
-            background-color: #3c3c3c;
-        }
-        /* 預覽 iframe */
-        iframe {
-            flex: 1;
-            background-color: #ffffff;
-            border: none;
-        }
-    </style>
-</head>
 <body>
 
-    <header>🌐【Vicky * AI】 HTML 即時預覽編輯器</header>
+    <header>🛠️ 雙向實時 HTML 編輯器 (修改任意一邊，另一邊自動同步)</header>
 
     <div class="container">
-        <!-- 左側：原始碼編輯區 -->
-        <div class="panel">
-            <div class="panel-title">HTML / CSS / JS 程式碼</div>
-            <textarea id="editor" spellcheck="false" placeholder="在此輸入 HTML 程式碼..."><!-- 預設顯示的範例內容 -->
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { 
-            font-family: sans-serif; 
-            text-align: center; 
-            padding-top: 50px; 
-            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
-            height: 100vh;
-            margin: 0;
-        }
-        h1 { color: #333; }
-        button { 
-            padding: 10px 20px; 
-            font-size: 16px; 
-            cursor: pointer; 
-            border: none; 
-            border-radius: 5px; 
-            background: #fff; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-        }
-    </style>
-</head>
-<body>
-    <h1>🎉 恭喜！即時預覽成功工作中！</h1>
-    <p>試著修改左邊的文字，右邊會立刻同步改變喔！</p>
-    <button onclick="alert('JavaScript 也能正常執行！')">點我測試 JS</button>
-</body>
-</html></textarea>
+        <!-- 左側：HTML 原始碼編輯區 -->
+        <div class="pane">
+            <div class="pane-title">HTML 原始碼編輯區</div>
+            <textarea id="htmlInput" placeholder="請在此輸入或修改 HTML 原始碼..."></textarea>
         </div>
 
-        <div class="divider"></div>
-
-        <!-- 右側：即時預覽區 -->
-        <div class="panel">
-            <div class="panel-title">即時預覽效果</div>
-            <iframe id="preview"></iframe>
+        <!-- 右側：結果預覽與可編輯區 -->
+        <div class="pane">
+            <div class="pane-title">結果預覽區 (可點擊直接打字編輯內容)</div>
+            <div id="visualPreview" class="preview-area" contenteditable="true"></div>
         </div>
     </div>
 
     <script>
-        const editor = document.getElementById('editor');
-        const preview = document.getElementById('preview');
+        const htmlInput = document.getElementById('htmlInput');
+        const visualPreview = document.getElementById('visualPreview');
 
-        // 更新預覽畫面的核心函數
-        function updatePreview() {
-            const code = editor.value;
-            // 利用 srcdoc 將文字直接渲染進 iframe 中，並解決腳本執行的安全限制問題
-            preview.srcdoc = code;
-        }
+        // 初始預載您的教學內容
+        const initialHTML = `<section>
+    <h2>【01】如何在 GitHub 新增圖片</h2>
+    <ol>
+        <li>點擊「<strong>ISSUE 問題</strong>」，新增 ISSUE，直接複製圖片就會產生一串圖片網址。</li>
+    </ol>
+    <img width="1336" height="463" alt="Image" src="https://github.com" />
+</section>
 
-        // 監聽輸入事件：當使用者打字時，即時觸發更新
-        editor.addEventListener('input', updatePreview);
+<section>
+    <h2>【02】 如何在 GitHub 檢視網頁設計(HTML)結果</h2>
+    <ol>
+        <li>點擊 GitHub 檔案頁面的 <code>Raw</code> 按鈕，將原始碼全部複製。</li>
+        <li>開啟 Chrome，按 <code>F12</code> 打開開發者工具 &gt; <strong>Elements</strong> &gt; 在 <code>&lt;body&gt;</code> 標籤上按右鍵 &gt; <strong>Edit as HTML</strong> &gt; 將程式碼貼上 &gt; 再按 <code>&lt;body&gt;</code> 左方箭頭（類似儲存作用） &gt; 即可看見畫面。</li>
+        <li>再次按 <code>F12</code> 關閉開發者工具，即可看見完整網頁畫面。</li>
+    </ol>
+</section>`;
 
-        // 網頁載入時，先初始化執行一次預覽
-        window.addEventListener('DOMContentLoaded', updatePreview);
+        // 初始化填入內容
+        htmlInput.value = initialHTML;
+        visualPreview.innerHTML = initialHTML;
+
+        let isUpdating = false;
+
+        // 當修改【左邊】HTML 程式碼時，同步更新【右邊】畫面
+        htmlInput.addEventListener('input', () => {
+            if (isUpdating) return;
+            isUpdating = true;
+            visualPreview.innerHTML = htmlInput.value;
+            isUpdating = false;
+        });
+
+        // 當修改【右邊】畫面內容時，同步更新【左邊】HTML 程式碼
+        visualPreview.addEventListener('input', () => {
+            if (isUpdating) return;
+            isUpdating = true;
+            htmlInput.value = visualPreview.innerHTML;
+            isUpdating = false;
+        });
     </script>
+
 </body>
-</html>
